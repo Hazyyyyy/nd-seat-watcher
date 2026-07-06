@@ -236,6 +236,16 @@ function classifyStatus(snippet) {
   return 'unknown';
 }
 
+function summarizeCourse(snippet) {
+  if (!snippet) return '(unknown course)';
+
+  const text = snippet.replace(/\s+/g, ' ').trim();
+  const boundary = text.search(/\b(?:section number|meets|instructor|credits?|schedule type|room|building|seats?|capacity|enrolled|remaining|available):/i);
+  const summary = (boundary === -1 ? text : text.slice(0, boundary)).trim();
+
+  return summary || '(unknown course)';
+}
+
 async function checkCrn(browser, term, crn) {
   const page = await browser.newPage();
   try {
@@ -309,17 +319,22 @@ async function main() {
     await browser.close();
   }
 
-  const openCrns = results.filter((r) => r.status === 'open').map((r) => r.crn);
+  const openResults = results.filter((r) => r.status === 'open');
 
   console.log('\n--- Summary ---');
   for (const r of results) {
     console.log(`CRN ${r.crn}: ${r.status}`);
   }
 
-  if (openCrns.length > 0) {
-    for (const crn of openCrns) {
-      console.log(`\nSEAT MAY BE OPEN FOR CRN ${crn}. GO TO NOVO NOW.`);
+  if (openResults.length > 0) {
+    console.log('\nOPEN COURSE(S) DETECTED\n');
+    for (const result of openResults) {
+      console.log(`CRN: ${result.crn}`);
+      console.log(`Course: ${summarizeCourse(result.snippet)}`);
+      console.log(`Details: ${result.snippet ? result.snippet : '(no snippet found)'}`);
+      console.log('');
     }
+    console.log('GO TO NOVO NOW.');
     process.exit(1);
   }
 

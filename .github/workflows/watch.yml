@@ -44,6 +44,14 @@ jobs:
         if: steps.check.outputs.code == '1'
         run: |
           {
+            if grep -q '^OPEN COURSE(S) DETECTED$' watch-output.txt; then
+              awk '
+                /^OPEN COURSE\(S\) DETECTED$/ { printing = 1 }
+                printing { print }
+                printing && /^GO TO NOVO NOW\.$/ { exit }
+              ' watch-output.txt
+              echo ""
+            fi
             echo "A watched Notre Dame PATH class may have opened."
             echo ""
             echo "Go to NOVO manually. This workflow does not register you."
@@ -65,7 +73,7 @@ jobs:
           password: ${{ secrets.SMTP_PASSWORD }}
           from: ND Seat Watcher <${{ secrets.SMTP_USERNAME }}>
           to: ${{ secrets.ALERT_TO }}
-          subject: ND seat may be open
+          subject: ND seat may be open - check CRN alert
           priority: high
           body: file://email-body.txt
 
