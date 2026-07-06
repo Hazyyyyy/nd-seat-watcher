@@ -1,0 +1,14 @@
+{
+  "name": "nd-seat-watcher",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Zero-cost watcher that checks public Notre Dame PATH class search for open seats on specific CRNs.",
+  "main": "watch-path.js",
+  "scripts": {
+    "check": "node watch-path.js"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "playwright": "^1.47.0"
+  }
+}
