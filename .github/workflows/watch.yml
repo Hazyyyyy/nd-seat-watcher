@@ -1,6 +1,5 @@
 name: Watch PATH Seats
 
-# refresh schedule
 on:
   schedule:
     - cron: "3,8,13,18,23,28,33,38,43,48,53,58 * * * *"
@@ -12,6 +11,7 @@ jobs:
     env:
       ND_TERM: ${{ vars.ND_TERM || 'Fall Semester 2026' }}
       ND_CRNS: ${{ vars.ND_CRNS }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -69,11 +69,11 @@ jobs:
           priority: high
           body: file://email-body.txt
 
-      - name: Fail workflow (seat open)
+      - name: Fail workflow if seat is open
         if: steps.check.outputs.code == '1'
         run: exit 1
 
-      - name: Fail workflow (script/site error)
+      - name: Fail workflow if script/site error
         if: steps.check.outputs.code != '0' && steps.check.outputs.code != '1'
         run: exit ${{ steps.check.outputs.code }}
 
