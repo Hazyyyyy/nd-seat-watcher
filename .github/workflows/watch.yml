@@ -27,7 +27,54 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Check PATH seats
-        run: npm run check
+        id: check
+        run: |
+          set +e
+          npm run check > watch-output.txt 2>&1
+          code=$?
+          set -e
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+      - name: Print check output
+        if: always()
+        run: cat watch-output.txt
+
+      - name: Build email body
+        if: steps.check.outputs.code == '1'
+        run: |
+          {
+            echo "A watched Notre Dame PATH class may have opened."
+            echo ""
+            echo "Go to NOVO manually. This workflow does not register you."
+            echo ""
+            echo "Workflow URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo ""
+            echo "----- watch-output.txt -----"
+            cat watch-output.txt
+          } > email-body.txt
+
+      - name: Send seat-open email
+        if: steps.check.outputs.code == '1'
+        uses: dawidd6/action-send-mail@v18
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          from: ND Seat Watcher <${{ secrets.SMTP_USERNAME }}>
+          to: ${{ secrets.ALERT_TO }}
+          subject: ND seat may be open
+          priority: high
+          body: file://email-body.txt
+
+      - name: Fail workflow (seat open)
+        if: steps.check.outputs.code == '1'
+        run: exit 1
+
+      - name: Fail workflow (script/site error)
+        if: steps.check.outputs.code != '0' && steps.check.outputs.code != '1'
+        run: exit ${{ steps.check.outputs.code }}
 
       - name: Upload debug artifacts
         if: always()
